@@ -10,7 +10,7 @@
 #include <cstdlib>
 
 // Version information
-#define NEXUS_VERSION "1.0.0"
+#define NEXUS_VERSION "1.3.0"
 #define NEXUS_BUILD_DATE __DATE__ " " __TIME__
 #define NEXUS_PLATFORM "macOS ARM64"
 
