@@ -45,7 +45,7 @@ git clone https://github.com/nexus-lang/nexus.git
 cd nexus
 
 # Build NEXUS
-make release
+g++ -std=c++17 main.cpp -o bin/nexus
 
 # Install system-wide (optional)
 sudo make install
