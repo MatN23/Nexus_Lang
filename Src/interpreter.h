@@ -2,7 +2,7 @@
 
 #include "lexer.h"
 #include "parser.h"
-#include "environment.h"
+#include "enviorment.h"
 #include "ml/neural_network.h"
 #include <memory>
 #include <map>
