@@ -1,0 +1,673 @@
+// 🧠 NEXUS AI Assistant - Advanced ML Pipeline Demo
+// This showcases the full power of NEXUS's ML-first design
+// Created by: NEXUS Team | Version: 1.0.0
+
+import nlp.tokenizer;
+import ml.neural_networks;
+import data.preprocessing;
+import utils.math;
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 CONFIGURATION & CONSTANTS
+// ═══════════════════════════════════════════════════════════
+
+class Config {
+    public static int VOCAB_SIZE = 50000;
+    public static int EMBEDDING_DIM = 512;
+    public static int HIDDEN_SIZE = 1024;
+    public static int MAX_SEQUENCE_LENGTH = 128;
+    public static double LEARNING_RATE = 0.0001;
+    public static int BATCH_SIZE = 64;
+    public static int EPOCHS = 100;
+    public static string MODEL_PATH = "models/nexus_ai_v1.nx";
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🔬 DATA PREPROCESSING PIPELINE
+// ═══════════════════════════════════════════════════════════
+
+class DataProcessor {
+    private var vocabulary;
+    private var tokenizer;
+    private tensor meanEmbedding;
+    private tensor stdEmbedding;
+    
+    public function initialize() {
+        print("🔧 Initializing data processor...");
+        
+        // Create advanced tokenizer with subword encoding
+        this.tokenizer = createBPETokenizer(Config.VOCAB_SIZE);
+        
+        // Build vocabulary from training corpus
+        var trainingTexts = loadCorpus("data/training_conversations.txt");
+        this.vocabulary = this.tokenizer.buildVocabulary(trainingTexts);
+        
+        print("📚 Vocabulary size: " + this.vocabulary.size());
+        print("✅ Data processor ready!");
+    }
+    
+    public function preprocessBatch(texts) {
+        var processedBatch = [];
+        
+        for (var text in texts) {
+            // Advanced text preprocessing pipeline
+            var cleaned = this.cleanText(text);
+            var tokens = this.tokenizer.encode(cleaned);
+            var padded = this.padSequence(tokens, Config.MAX_SEQUENCE_LENGTH);
+            var embedded = this.createEmbedding(padded);
+            
+            processedBatch.add(embedded);
+        }
+        
+        return tensor(processedBatch);
+    }
+    
+    private function cleanText(text) {
+        // Advanced text cleaning with regex and normalization
+        var cleaned = text.toLowerCase();
+        cleaned = cleaned.replaceAll("[^a-zA-Z0-9\\s]", "");
+        cleaned = cleaned.trim();
+        cleaned = cleaned.replaceAll("\\s+", " ");
+        return cleaned;
+    }
+    
+    private function padSequence(tokens, maxLength) {
+        if (tokens.length() > maxLength) {
+            return tokens.slice(0, maxLength);
+        } else {
+            var padded = tokens;
+            while (padded.length() < maxLength) {
+                padded.add(0); // PAD token
+            }
+            return padded;
+        }
+    }
+    
+    private function createEmbedding(tokens) {
+        var embeddings = [];
+        for (var token in tokens) {
+            var embedding = this.getTokenEmbedding(token);
+            embeddings.add(embedding);
+        }
+        return tensor(embeddings);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🧠 ADVANCED NEURAL ARCHITECTURE
+// ═══════════════════════════════════════════════════════════
+
+class TransformerBlock {
+    public model multiHeadAttention;
+    public model feedForward;
+    public model layerNorm1;
+    public model layerNorm2;
+    
+    public function initialize(hiddenSize, numHeads) {
+        print("🔧 Building Transformer block...");
+        
+        // Multi-head self-attention mechanism
+        this.multiHeadAttention = [
+            multiHeadSelfAttention(numHeads=numHeads, hiddenSize=hiddenSize),
+            dropout(0.1)
+        ];
+        
+        // Position-wise feed-forward network
+        this.feedForward = [
+            dense(hiddenSize * 4, activation="relu"),
+            dropout(0.1),
+            dense(hiddenSize)
+        ];
+        
+        // Layer normalization
+        this.layerNorm1 = layerNormalization();
+        this.layerNorm2 = layerNormalization();
+        
+        print("✅ Transformer block ready!");
+    }
+    
+    public function forward(input) {
+        // Self-attention with residual connection
+        var attention = predict this.multiHeadAttention input=input;
+        var residual1 = predict this.layerNorm1 input=(input + attention);
+        
+        // Feed-forward with residual connection
+        var ff = predict this.feedForward input=residual1;
+        var output = predict this.layerNorm2 input=(residual1 + ff);
+        
+        return output;
+    }
+}
+
+class NexusAI {
+    // Core architecture components
+    public model tokenEmbedding;
+    public model positionalEncoding;
+    public var transformerLayers = [];
+    public model outputProjection;
+    public model finalClassifier;
+    
+    // Training components
+    private var optimizer;
+    private var scheduler;
+    private var bestLoss = 999999.0;
+    private var patience = 0;
+    
+    // Advanced features
+    public model sentimentAnalyzer;
+    public model intentClassifier;
+    public model entityExtractor;
+    
+    public function initialize() {
+        print("🚀 Initializing NEXUS AI Architecture...");
+        
+        this.buildEmbeddingLayers();
+        this.buildTransformerStack();
+        this.buildOutputLayers();
+        this.buildAuxiliaryModels();
+        this.initializeOptimizers();
+        
+        print("🎯 Model Summary:");
+        this.printModelSummary();
+        print("✅ NEXUS AI ready for training!");
+    }
+    
+    private function buildEmbeddingLayers() {
+        print("📦 Building embedding layers...");
+        
+        // Token embeddings with learned positional encoding
+        this.tokenEmbedding = [
+            embedding(vocabSize=Config.VOCAB_SIZE, 
+                     embedDim=Config.EMBEDDING_DIM,
+                     paddingIdx=0),
+            dropout(0.1)
+        ];
+        
+        // Sinusoidal positional encoding
+        this.positionalEncoding = positionalEncoding(
+            maxLen=Config.MAX_SEQUENCE_LENGTH,
+            embedDim=Config.EMBEDDING_DIM
+        );
+    }
+    
+    private function buildTransformerStack() {
+        print("🏗️  Building Transformer stack...");
+        
+        var numLayers = 12;
+        var numHeads = 16;
+        
+        for (var i = 0; i < numLayers; i++) {
+            var layer = new TransformerBlock();
+            layer.initialize(Config.HIDDEN_SIZE, numHeads);
+            this.transformerLayers.add(layer);
+        }
+    }
+    
+    private function buildOutputLayers() {
+        print("🎯 Building output layers...");
+        
+        // Multi-task output projection
+        this.outputProjection = [
+            dense(Config.HIDDEN_SIZE, activation="tanh"),
+            dropout(0.2),
+            dense(Config.HIDDEN_SIZE // 2, activation="relu")
+        ];
+        
+        // Final classification layer with multiple outputs
+        this.finalClassifier = [
+            dense(Config.VOCAB_SIZE, activation="softmax", name="response_gen"),
+            dense(5, activation="softmax", name="sentiment"),
+            dense(20, activation="softmax", name="intent")
+        ];
+    }
+    
+    private function buildAuxiliaryModels() {
+        print("🔧 Building auxiliary models...");
+        
+        // Sentiment analysis branch
+        this.sentimentAnalyzer = [
+            globalAveragePooling1D(),
+            dense(256, activation="relu"),
+            dropout(0.3),
+            dense(5, activation="softmax") // very negative, negative, neutral, positive, very positive
+        ];
+        
+        // Intent classification branch  
+        this.intentClassifier = [
+            globalMaxPooling1D(),
+            dense(512, activation="relu"),
+            dropout(0.3),
+            dense(20, activation="softmax") // question, request, greeting, complaint, etc.
+        ];
+        
+        // Named entity extraction
+        this.entityExtractor = [
+            dense(Config.HIDDEN_SIZE, activation="relu"),
+            dropout(0.2),
+            dense(7, activation="softmax") // O, B-PER, I-PER, B-LOC, I-LOC, B-ORG, I-ORG
+        ];
+    }
+    
+    private function initializeOptimizers() {
+        print("⚙️  Initializing optimizers...");
+        
+        // Advanced optimizer with learning rate scheduling
+        this.optimizer = adamW(
+            learningRate=Config.LEARNING_RATE,
+            weightDecay=0.01,
+            beta1=0.9,
+            beta2=0.999,
+            epsilon=1e-8
+        );
+        
+        // Cosine annealing with warm restarts
+        this.scheduler = cosineAnnealingWarmRestarts(
+            T_0=10,
+            T_mult=2,
+            eta_min=1e-6
+        );
+    }
+    
+    public function train(trainingData, validationData) {
+        print("🎓 Starting advanced training pipeline...");
+        print("📊 Training samples: " + trainingData.size());
+        print("📊 Validation samples: " + validationData.size());
+        
+        var trainingHistory = {
+            loss: [],
+            accuracy: [],
+            sentiment_accuracy: [],
+            intent_accuracy: [],
+            validation_loss: [],
+            validation_accuracy: []
+        };
+        
+        for (var epoch = 1; epoch <= Config.EPOCHS; epoch++) {
+            print("🔄 Epoch " + epoch + "/" + Config.EPOCHS);
+            
+            // Training phase
+            var trainLoss = this.trainEpoch(trainingData);
+            var trainMetrics = this.evaluateMetrics(trainingData.sample(1000));
+            
+            // Validation phase
+            var valLoss = this.validateEpoch(validationData);
+            var valMetrics = this.evaluateMetrics(validationData);
+            
+            // Update learning rate
+            this.scheduler.step();
+            var currentLR = this.scheduler.getCurrentLR();
+            
+            // Log progress
+            print("📈 Train Loss: " + trainLoss.toFixed(4) + 
+                  " | Val Loss: " + valLoss.toFixed(4) +
+                  " | LR: " + currentLR.toScientific());
+            
+            print("📊 Metrics - Acc: " + trainMetrics.accuracy.toFixed(3) +
+                  " | Sentiment: " + trainMetrics.sentimentAcc.toFixed(3) +
+                  " | Intent: " + trainMetrics.intentAcc.toFixed(3));
+            
+            // Save history
+            trainingHistory.loss.add(trainLoss);
+            trainingHistory.accuracy.add(trainMetrics.accuracy);
+            trainingHistory.validation_loss.add(valLoss);
+            
+            // Early stopping and model saving
+            if (valLoss < this.bestLoss) {
+                this.bestLoss = valLoss;
+                this.patience = 0;
+                this.saveCheckpoint("best_model.nx");
+                print("💾 New best model saved!");
+            } else {
+                this.patience++;
+                if (this.patience >= 10) {
+                    print("⏹️  Early stopping triggered!");
+                    break;
+                }
+            }
+            
+            // Generate sample responses to monitor progress
+            if (epoch % 5 == 0) {
+                this.generateSampleResponses();
+            }
+        }
+        
+        print("🎉 Training completed!");
+        this.saveTrainingHistory(trainingHistory);
+        return trainingHistory;
+    }
+    
+    private function trainEpoch(trainingData) {
+        var totalLoss = 0.0;
+        var batches = trainingData.createBatches(Config.BATCH_SIZE);
+        
+        for (var batch in batches) {
+            // Multi-task forward pass
+            var outputs = this.forwardPass(batch.inputs);
+            
+            // Calculate multi-task loss
+            var responseLoss = crossEntropyLoss(outputs.response, batch.targets);
+            var sentimentLoss = crossEntropyLoss(outputs.sentiment, batch.sentimentLabels);
+            var intentLoss = crossEntropyLoss(outputs.intent, batch.intentLabels);
+            
+            var totalBatchLoss = responseLoss + 0.3 * sentimentLoss + 0.2 * intentLoss;
+            
+            // Backward pass with gradient clipping
+            var gradients = backpropagate(totalBatchLoss);
+            clipGradients(gradients, maxNorm=1.0);
+            
+            // Optimizer step
+            this.optimizer.step(gradients);
+            this.optimizer.zeroGrad();
+            
+            totalLoss += totalBatchLoss.item();
+        }
+        
+        return totalLoss / batches.length();
+    }
+    
+    public function generateResponse(userInput, context = []) {
+        print("🤔 Analyzing: \"" + userInput + "\"");
+        
+        // Preprocess input with context
+        var contextualInput = this.addContext(userInput, context);
+        var processed = this.preprocessor.preprocessBatch([contextualInput]);
+        
+        // Multi-stage inference
+        var embeddings = this.getEmbeddings(processed);
+        var features = this.extractFeatures(embeddings);
+        
+        // Auxiliary predictions
+        var sentiment = predict this.sentimentAnalyzer input=features;
+        var intent = predict this.intentClassifier input=features;
+        var entities = predict this.entityExtractor input=embeddings;
+        
+        // Generate response with beam search
+        var response = this.generateWithBeamSearch(features, beamWidth=5);
+        
+        // Post-process and enhance response
+        var finalResponse = this.postProcessResponse(response, sentiment, intent);
+        
+        print("😊 Sentiment: " + this.getSentimentLabel(sentiment));
+        print("🎯 Intent: " + this.getIntentLabel(intent));
+        print("🔤 Entities: " + this.formatEntities(entities));
+        print("💬 Response: " + finalResponse);
+        
+        return {
+            text: finalResponse,
+            sentiment: sentiment,
+            intent: intent,
+            entities: entities,
+            confidence: this.calculateConfidence(features)
+        };
+    }
+    
+    private function generateSampleResponses() {
+        print("🎭 Generating sample responses...");
+        
+        var testInputs = [
+            "Hello, how are you today?",
+            "I'm feeling really frustrated with this problem",
+            "Can you help me with machine learning?",
+            "What's the weather like outside?",
+            "Thank you for your help!"
+        ];
+        
+        for (var input in testInputs) {
+            var response = this.generateResponse(input);
+            print("  Input: " + input);
+            print("  Output: " + response.text);
+            print("  Confidence: " + response.confidence.toFixed(3));
+            print("");
+        }
+    }
+    
+    private function printModelSummary() {
+        var totalParams = this.calculateTotalParameters();
+        var trainableParams = this.calculateTrainableParameters();
+        
+        print("╔══════════════════════════════════════════════════════════╗");
+        print("║                    🧠 NEXUS AI MODEL                     ║");
+        print("╠══════════════════════════════════════════════════════════╣");
+        print("║ Architecture: Transformer + Multi-task Learning         ║");
+        print("║ Parameters: " + totalParams.toFormattedString() + " total, " + trainableParams.toFormattedString() + " trainable      ║");
+        print("║ Vocabulary: " + Config.VOCAB_SIZE.toFormattedString() + " tokens                          ║");
+        print("║ Max Length: " + Config.MAX_SEQUENCE_LENGTH + " tokens                           ║");
+        print("║ Embedding: " + Config.EMBEDDING_DIM + "D                                ║");
+        print("║ Hidden Size: " + Config.HIDDEN_SIZE + "D                               ║");
+        print("╚══════════════════════════════════════════════════════════╝");
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎮 INTERACTIVE DEMO & TESTING
+// ═══════════════════════════════════════════════════════════
+
+class NexusDemo {
+    private var ai;
+    private var processor;
+    private var conversationHistory = [];
+    
+    public function initialize() {
+        print("🌟 NEXUS AI Demo Initializing...");
+        
+        this.processor = new DataProcessor();
+        this.processor.initialize();
+        
+        this.ai = new NexusAI();
+        this.ai.initialize();
+        
+        print("✅ Demo ready!");
+    }
+    
+    public function runInteractiveDemo() {
+        print("🎪 Starting Interactive NEXUS AI Demo!");
+        print("💡 Type 'quit' to exit, 'help' for commands");
+        print("");
+        
+        while (true) {
+            var userInput = input("You: ");
+            
+            if (userInput.toLowerCase() == "quit" || userInput == "exit") {
+                print("👋 Thanks for trying NEXUS AI!");
+                break;
+            }
+            
+            if (userInput.toLowerCase() == "help") {
+                this.showHelp();
+                continue;
+            }
+            
+            if (userInput.toLowerCase() == "stats") {
+                this.showStats();
+                continue;
+            }
+            
+            if (userInput.toLowerCase() == "history") {
+                this.showHistory();
+                continue;
+            }
+            
+            if (!userInput.trim().isEmpty()) {
+                var startTime = getCurrentTime();
+                var response = this.ai.generateResponse(userInput, this.conversationHistory);
+                var endTime = getCurrentTime();
+                
+                // Add to conversation history
+                this.conversationHistory.add({
+                    user: userInput,
+                    ai: response.text,
+                    sentiment: response.sentiment,
+                    intent: response.intent,
+                    timestamp: startTime,
+                    responseTime: endTime - startTime
+                });
+                
+                // Limit history size
+                if (this.conversationHistory.size() > 10) {
+                    this.conversationHistory = this.conversationHistory.slice(-10);
+                }
+                
+                print("AI: " + response.text);
+                print("⏱️  Response time: " + (endTime - startTime).toFixed(2) + "ms");
+                print("");
+            }
+        }
+    }
+    
+    private function showHelp() {
+        print("🔧 NEXUS AI Commands:");
+        print("  help     - Show this help");
+        print("  stats    - Show model statistics");
+        print("  history  - Show conversation history");
+        print("  quit     - Exit the demo");
+        print("");
+        print("🎯 Try asking about:");
+        print("  • General questions and conversation");
+        print("  • Technical topics and programming");
+        print("  • Emotions and feelings (sentiment analysis)");
+        print("  • Requests and commands (intent recognition)");
+        print("");
+    }
+    
+    public function runBenchmarks() {
+        print("🏃 Running NEXUS AI Benchmarks...");
+        
+        // Performance benchmarks
+        this.benchmarkInferenceSpeed();
+        this.benchmarkMemoryUsage();
+        this.benchmarkAccuracy();
+        
+        // Quality assessments
+        this.assessResponseQuality();
+        this.assessSentimentAccuracy();
+        this.assessIntentRecognition();
+        
+        print("📊 Benchmark results saved to benchmarks.json");
+    }
+    
+    private function benchmarkInferenceSpeed() {
+        print("⚡ Benchmarking inference speed...");
+        
+        var testInputs = generateRandomInputs(1000);
+        var startTime = getCurrentTime();
+        
+        for (var input in testInputs) {
+            this.ai.generateResponse(input);
+        }
+        
+        var endTime = getCurrentTime();
+        var avgTime = (endTime - startTime) / testInputs.size();
+        
+        print("📈 Average inference time: " + avgTime.toFixed(2) + "ms");
+        print("🚀 Throughput: " + (1000.0 / avgTime).toFixed(0) + " responses/second");
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🚀 MAIN EXECUTION PIPELINE
+// ═══════════════════════════════════════════════════════════
+
+function main() {
+    print("╔══════════════════════════════════════════════════════════╗");
+    print("║  🧠 NEXUS AI - Advanced ML Language Demonstration       ║");
+    print("║     Showcasing Production-Ready ML Applications          ║");
+    print("╚══════════════════════════════════════════════════════════╝");
+    print("");
+    
+    try {
+        // Initialize the complete AI system
+        var demo = new NexusDemo();
+        demo.initialize();
+        
+        print("🎯 Choose execution mode:");
+        print("1. Interactive Demo");
+        print("2. Training Mode");
+        print("3. Benchmark Suite");
+        print("4. Quick Test");
+        
+        var choice = input("Enter choice (1-4): ");
+        
+        switch (choice) {
+            case "1":
+                demo.runInteractiveDemo();
+                break;
+            case "2":
+                runTrainingPipeline();
+                break;
+            case "3":
+                demo.runBenchmarks();
+                break;
+            case "4":
+                runQuickTest();
+                break;
+            default:
+                print("🎮 Running interactive demo by default...");
+                demo.runInteractiveDemo();
+        }
+        
+    } catch (error) {
+        print("❌ Error: " + error.message);
+        print("🔧 Stack trace: " + error.stackTrace);
+    }
+    
+    print("");
+    print("🌟 Thank you for trying NEXUS AI!");
+    print("💻 Built with NEXUS - The ML-First Programming Language");
+}
+
+function runQuickTest() {
+    print("🏃 Running quick NEXUS demonstration...");
+    
+    // Demonstrate core NEXUS features
+    var message = "NEXUS makes ML development incredibly intuitive!";
+    print("📝 Message: " + message);
+    
+    // Create and train a simple model
+    model quickNet = [128, 64, 32, 10];
+    print("🧠 Created neural network: " + quickNet.getArchitecture());
+    
+    train quickNet epochs=10 batchSize=32;
+    print("✅ Model training completed!");
+    
+    // Generate some predictions
+    var testData = generateRandomTensor([1, 128]);
+    var prediction = predict quickNet input=testData;
+    print("🎯 Sample prediction: " + prediction.toString());
+    
+    // Demonstrate tensor operations
+    tensor matrixA = [[1, 2, 3], [4, 5, 6]];
+    tensor matrixB = [[7, 8], [9, 10], [11, 12]];
+    tensor result = matmul(matrixA, matrixB);
+    
+    print("🔢 Matrix multiplication result:");
+    print(result.toString());
+    
+    print("🎉 Quick test completed successfully!");
+}
+
+function runTrainingPipeline() {
+    print("🎓 Starting full training pipeline...");
+    
+    // Load training data
+    var trainingData = loadDataset("data/conversations_train.json");
+    var validationData = loadDataset("data/conversations_val.json");
+    
+    print("📊 Loaded " + trainingData.size() + " training samples");
+    print("📊 Loaded " + validationData.size() + " validation samples");
+    
+    // Initialize and train the model
+    var ai = new NexusAI();
+    ai.initialize();
+    
+    var history = ai.train(trainingData, validationData);
+    
+    // Save the trained model
+    ai.save(Config.MODEL_PATH);
+    print("💾 Model saved to: " + Config.MODEL_PATH);
+    
+    // Generate training report
+    generateTrainingReport(history);
+}
+
+// Execute the main function
+main();

@@ -17,9 +17,10 @@ DOC_DIR = docs
 EXAMPLES_DIR = examples
 
 # Source files
-SOURCES = $(wildcard $(SRC_DIR)/*.cpp) \
-          $(wildcard $(SRC_DIR)/ml/*.cpp) \
-          $(wildcard $(SRC_DIR)/utils/*.cpp)
+# Fixed - since you're already in Src directory
+SOURCES = $(wildcard *.cpp) \
+          $(wildcard ml/*.cpp) \
+          $(wildcard utils/*.cpp)
 
 # Object files
 OBJECTS = $(SOURCES:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
